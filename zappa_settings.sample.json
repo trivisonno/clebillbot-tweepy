@@ -1,0 +1,15 @@
+{
+    "dev": {
+        "app_function": "beta.app",
+        "runtime": "python3.8",
+        "keep_warm": false,
+        "timeout_seconds": 600,
+        "include": [
+            "foo/secrets.py"
+        ],
+        "events": [{
+          "function": "beta.scrapeBills",
+          "expression": "rate(15 minutes)"
+        }],
+    }
+}
