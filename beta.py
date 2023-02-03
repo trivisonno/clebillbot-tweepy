@@ -60,11 +60,14 @@ def scrapeBills():
 
             # This call to check for urls will fail if a tweet doesn't have a URL linked, such as ordinary retweets
             resp = s.head(tw_status.entities['urls'][0]['expanded_url'])
-            print(billId, resp.headers['Content-Length'])
+
+            # sometimes Legistar will not include a 'Content-Length' header, but instead a 'Transfer-Encoding': 'chunked' header
+            if 'Content-Length' in resp.headers.keys():
+                print(billId, resp.headers['Content-Length'])
 
             # When the link is broken after an item is removed from Legistar, the url will return a specific content length of 136.
             # We'll use this to find deleted items.
-            if int(resp.headers['Content-Length']) == 136:
+            if 'Content-Length' in resp.headers.keys() and int(resp.headers['Content-Length']) == 136:
                 if tw_status.id not in skip_deleted_alerts:
                     print('TWEET THAT ITEM IS DELETED')
                     deleted_legislation.append({'in_reply_to_status_id': tw_status.id, 'text': 'City Council removed '+ billId + ' from Legistar, and the item link is now broken. Sometimes Council posts items before they were ready for sharing publicly. You\'ll find a new tweet if Council reposts the item on Legistar!'})
