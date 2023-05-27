@@ -52,11 +52,13 @@ def scrapeBills():
     previous_tweets = []
     deleted_legislation = []
     skip_deleted_alerts = []
+    previous_tweet_urls = []
 
     for tw_status in api.user_timeline(count=200, tweet_mode='extended'):
         if 'City Council removed ' not in html.unescape(tw_status.full_text):
             billId = html.unescape(tw_status.full_text).split(':')[0].split(',')[0]
             previous_tweets.append(billId)
+            previous_tweet_urls.append(tw_status.entities['urls'][0]['expanded_url'])
 
             # This call to check for urls will fail if a tweet doesn't have a URL linked, such as ordinary retweets
             resp = s.head(tw_status.entities['urls'][0]['expanded_url'])
@@ -72,11 +74,12 @@ def scrapeBills():
                     print('TWEET THAT ITEM IS DELETED')
                     deleted_legislation.append({'in_reply_to_status_id': tw_status.id, 'text': 'City Council removed '+ billId + ' from Legistar, and the item link is now broken. Sometimes Council posts items before they were ready for sharing publicly. You\'ll find a new tweet if Council reposts the item on Legistar!'})
                 else:
-                    print("WE'VE ALREADY TWEETED THE DELETE ALERT")
+                    print("WE'VE ALREADY TWEETED THE DELETE ALERT", tw_status.id)
+
 
     # DO SOMETHING FOR DELETED LEGISLATION
         else: # if "City Council removed" is in the tweet text
-            print(tw_status)
+            #print(tw_status)
             skip_deleted_alerts.append(tw_status.in_reply_to_status_id)
             pass
 
@@ -106,7 +109,7 @@ def scrapeBills():
         bill['description'] = bill['description'][:1].upper() + bill['description'][1:]
 
 
-        if bill['title'] not in previous_tweets:
+        if bill['title'] not in previous_tweets or (bill['link'] not in previous_tweet_urls):
             # This file is only for further research. You can comment out the next 7 lines if you just want to tweet.
             if not exists('/tmp/timestamped-legistar_tweets.csv'):
                 try:
